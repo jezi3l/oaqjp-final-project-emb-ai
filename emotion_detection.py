@@ -5,7 +5,7 @@ import json
 
 def emotion_detector(text_to_analyse):
     url = 'https://api.us-south.natural-language-understanding.watson.cloud.ibm.com/v1/analyze?version=2022-04-07'
-    myobj = {
+    payload = {
         "text": text_to_analyse,
         "features": {
             "emotion": {
@@ -13,78 +13,72 @@ def emotion_detector(text_to_analyse):
             }
         }
     }
-    header = {"Content-Type": "application/json"}
+    headers = {"Content-Type": "application/json"}
+
     response = requests.post(
         url,
-        json=myobj,
-        headers=header,
+        json=payload,
+        headers=headers,
         auth=HTTPBasicAuth("apikey", "bpcEobre2qPvq8jk8tlaldnYDYE0lwgB70JxcVAujW4B")
     )
-    formatted_response = response.json()
-    print(formatted_response)
+
+    try:
+        response_dict = json.loads(response.text)  # Step 1: Convert response to dictionary
+    except json.JSONDecodeError:
+        return {
+            'anger': None,
+            'disgust': None,
+            'fear': None,
+            'joy': None,
+            'sadness': None,
+            'dominant_emotion': None
+        }
 
     if response.status_code == 200:
         try:
-            emotions = formatted_response['emotion']['document']['emotion']
-            
-            # Extract the required emotions with their scores
-            anger_score = emotions.get('anger', 0)
-            disgust_score = emotions.get('disgust', 0)
-            fear_score = emotions.get('fear', 0)
-            joy_score = emotions.get('joy', 0)
-            sadness_score = emotions.get('sadness', 0)
-            
-            # Find the dominant emotion (emotion with highest score)
+            # Step 2: Extract emotions
+            emotions = response_dict['emotion']['document']['emotion']
+
+            anger = emotions.get('anger', 0)
+            disgust = emotions.get('disgust', 0)
+            fear = emotions.get('fear', 0)
+            joy = emotions.get('joy', 0)
+            sadness = emotions.get('sadness', 0)
+
+            # Step 3: Find dominant emotion
             emotion_scores = {
-                'anger': anger_score,
-                'disgust': disgust_score,
-                'fear': fear_score,
-                'joy': joy_score,
-                'sadness': sadness_score
+                'anger': anger,
+                'disgust': disgust,
+                'fear': fear,
+                'joy': joy,
+                'sadness': sadness
             }
             dominant_emotion = max(emotion_scores, key=emotion_scores.get)
-            
-            # Return in the specified format
+
+            # Step 4: Return formatted result
             return {
-                'anger': anger_score,
-                'disgust': disgust_score,
-                'fear': fear_score,
-                'joy': joy_score,
-                'sadness': sadness_score,
+                'anger': anger,
+                'disgust': disgust,
+                'fear': fear,
+                'joy': joy,
+                'sadness': sadness,
                 'dominant_emotion': dominant_emotion
             }
+
         except KeyError:
-            return {
-                'anger': None,
-                'disgust': None,
-                'fear': None,
-                'joy': None,
-                'sadness': None,
-                'dominant_emotion': None
-            }
+            pass  # Fall through to error response below
 
-    # Handle server error
-    elif response.status_code == 500:
-        return {
-            'anger': None,
-            'disgust': None,
-            'fear': None,
-            'joy': None,
-            'sadness': None,
-            'dominant_emotion': None
-        }
+    # Handle any error or malformed response
+    return {
+        'anger': None,
+        'disgust': None,
+        'fear': None,
+        'joy': None,
+        'sadness': None,
+        'dominant_emotion': None
+    }
 
-    # Handle other unexpected errors
-    else:
-        return {
-            'anger': None,
-            'disgust': None,
-            'fear': None,
-            'joy': None,
-            'sadness': None,
-            'dominant_emotion': None
-        }
-              
+
 if __name__ == "__main__":
     text = input("Enter text to analyze: ")
     result = emotion_detector(text)
