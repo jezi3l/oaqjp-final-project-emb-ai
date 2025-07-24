@@ -4,6 +4,17 @@ import json
 
 
 def emotion_detector(text_to_analyse):
+    # Handle blank entries - return None values for all keys
+    if not text_to_analyse or text_to_analyse.strip() == "":
+        return {
+            'anger': None,
+            'disgust': None,
+            'fear': None,
+            'joy': None,
+            'sadness': None,
+            'dominant_emotion': None
+        }
+    
     url = 'https://api.us-south.natural-language-understanding.watson.cloud.ibm.com/v1/analyze?version=2022-04-07'
     payload = {
         "text": text_to_analyse,
@@ -68,7 +79,7 @@ def emotion_detector(text_to_analyse):
         except KeyError:
             pass  # Fall through to error response below
 
-    # Handle any error or malformed response
+    # Handle any error or malformed response (including status_code 400)
     return {
         'anger': None,
         'disgust': None,
